@@ -1,0 +1,57 @@
+{
+    "name": "stevelacey/ui-avatars",
+    "description": "Deterministic avatar URLs: Gravatar photos with a colorful initials fallback.",
+    "keywords": ["avatar", "gravatar", "libravatar", "initials", "placeholder", "ui-avatars", "laravel"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Steve Lacey",
+            "email": "steve@steve.ly"
+        }
+    ],
+    "require": {
+        "php": ">=8.2",
+        "ext-mbstring": "*"
+    },
+    "require-dev": {
+        "filament/filament": "^3.0|^4.0|^5.0",
+        "laravel/jetstream": "^5.0",
+        "laravel/pint": "^1.0",
+        "orchestra/testbench": "^10.0|^11.0",
+        "pestphp/pest": "^3.0"
+    },
+    "suggest": {
+        "illuminate/support": "Configure the shared instance from config/ui-avatars.php in Laravel",
+        "laravel/jetstream": "Use avatars as the default profile photo",
+        "filament/filament": "Use avatars as the default avatar provider"
+    },
+    "autoload": {
+        "psr-4": {
+            "SteveLacey\\UiAvatars\\": "src/"
+        },
+        "files": [
+            "src/helpers.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "SteveLacey\\UiAvatars\\Tests\\": "tests/"
+        }
+    },
+    "config": {
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        }
+    },
+    "scripts": {
+        "lint": "pint $([ \"$CI\" ] && echo --test)",
+        "test": "pest"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "SteveLacey\\UiAvatars\\Laravel\\ServiceProvider"
+            ]
+        }
+    }
+}

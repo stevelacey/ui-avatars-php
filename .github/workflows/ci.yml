@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  pull_request: ~
+  push: ~
+
+jobs:
+  test:
+    name: PHP ${{ matrix.php }} / Laravel ${{ matrix.laravel }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ["8.2", "8.3", "8.4", "8.5"]
+        laravel: ["12", "13"]
+        exclude:
+          - { php: "8.2", laravel: "13" }
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          coverage: pcov
+
+      - run: composer require "illuminate/support:^${{ matrix.laravel }}.0" --dev --no-interaction --no-update
+      - run: composer require "orchestra/testbench:^${{ matrix.laravel == '12' && '10' || '11' }}.0" --dev --no-interaction --no-update
+      - run: composer update --prefer-dist --no-interaction
+
+      - run: echo "$PWD/vendor/bin" >> "$GITHUB_PATH"
+
+      - run: pint --test
+
+      - run: pest --coverage --coverage-clover coverage.xml --min=100
+
+      - if: matrix.php == '8.5' && matrix.laravel == '13'
+        name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
