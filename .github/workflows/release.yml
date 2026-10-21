@@ -1,0 +1,32 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          coverage: none
+
+      - run: composer update --prefer-dist --no-interaction
+
+      - run: echo "$PWD/vendor/bin" >> "$GITHUB_PATH"
+
+      - run: pint --test
+      - run: pest
+
+      - name: Notify Packagist
+        run: |
+          curl --fail-with-body -XPOST \
+            -H 'content-type: application/json' \
+            -H 'Authorization: Bearer ${{ github.repository_owner }}:${{ secrets.PACKAGIST_TOKEN }}' \
+            "https://packagist.org/api/update-package" \
+            -d '{"repository":{"url":"https://packagist.org/packages/${{ github.repository }}"}}'
