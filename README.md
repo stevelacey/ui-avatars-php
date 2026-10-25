@@ -93,6 +93,7 @@ Options can be configured globally or overridden per call.
 | `fontColor` | | Pin the text color |
 | `fontSize` | `0.4` | Size of the initials (`0.1` to `1`) |
 | `format` | | Image format, e.g. `png`, `svg`, and other [formats](https://wsrv.nl/docs/format) |
+| `hash` | `sha256` | Email hash for photo lookups, `sha256` or `md5` |
 | `host` | `ui-avatars.com` | User initials avatars host |
 | `length` | `2` | Number of initials |
 | `mask` | | Shape mask, e.g. `hexagon`, `pentagon`, `square`, and other [masks](https://wsrv.nl/docs/mask) |

@@ -27,6 +27,8 @@ return [
 
     'format' => null,
 
+    'hash' => null,
+
     'host' => null,
 
     'length' => null,

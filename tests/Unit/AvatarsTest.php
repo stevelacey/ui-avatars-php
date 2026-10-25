@@ -210,6 +210,32 @@ test('source selects the photo host', function () {
     expect((new Avatars)->build(name: NAME, email: EMAIL, source: 'libravatar'))->toStartWith('https://seccdn.libravatar.org/avatar/');
 });
 
+test('default hash is sha256', function () {
+    expect((new Avatars)->hash)->toBe('sha256');
+});
+
+test('instance hash is used for photo lookups', function () {
+    expect((new Avatars(hash: 'md5'))->build(name: NAME, email: EMAIL))->toContain('/avatar/'.md5(EMAIL).'?');
+});
+
+test('configure sets a persistent hash', function () {
+    expect((new Avatars)->configure(hash: 'md5')->build(name: NAME, email: EMAIL))->toContain('/avatar/'.md5(EMAIL).'?');
+});
+
+test('hash applies to proxied photo lookups', function () {
+    expect(rawurldecode((new Avatars)->build(name: NAME, email: EMAIL, mask: 'hexagon')))->toContain('/avatar/'.hash('sha256', EMAIL).'?s=128&d=404');
+});
+
+test('masks without an email proxy the initials directly', function () {
+    $url = (new Avatars)->build(name: NAME, mask: 'hexagon');
+    expect(query($url))->toMatchArray(['url' => (new Avatars)->build(name: NAME), 'mask' => 'hexagon'])->not->toHaveKey('default');
+    expect($url)->not->toContain('gravatar');
+});
+
+test('unknown hash throws', function () {
+    (new Avatars)->build(name: NAME, email: EMAIL, hash: 'sha1');
+})->throws(InvalidArgumentException::class, "unknown hash: 'sha1'");
+
 test('unknown source throws', function () {
     (new Avatars)->build(name: NAME, email: EMAIL, source: 'notarealsource');
 })->throws(InvalidArgumentException::class, 'unknown source');

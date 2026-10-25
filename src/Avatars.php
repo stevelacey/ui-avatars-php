@@ -50,6 +50,7 @@ class Avatars
         public ?string $fontColor = null,
         public float $fontSize = 0.4,
         public ?string $format = null,
+        public string $hash = 'sha256',
         public ?string $host = null,
         public int $length = 2,
         public ?string $mask = null,
@@ -74,6 +75,7 @@ class Avatars
         ?string $fontColor = null,
         ?float $fontSize = null,
         ?string $format = null,
+        ?string $hash = null,
         ?string $host = null,
         ?int $length = null,
         ?string $mask = null,
@@ -90,6 +92,7 @@ class Avatars
         $fontColor ??= $this->fontColor;
         $fontSize ??= $this->fontSize;
         $format ??= $this->format;
+        $hash ??= $this->hash;
         $host = $this->parseHostname($host ?: $this->host);
         $image = (string) $image ?: null;
         $length ??= $this->length;
@@ -119,6 +122,10 @@ class Avatars
             throw new InvalidArgumentException("unknown region: '{$region}'");
         }
 
+        if (! in_array($hash, ['md5', 'sha256'], true)) {
+            throw new InvalidArgumentException("unknown hash: '{$hash}'");
+        }
+
         if ($origin && ! str_contains($origin, '.')) {
             throw new InvalidArgumentException("unknown source: '{$source}'");
         }
@@ -133,6 +140,7 @@ class Avatars
         }
 
         $digest = md5(mb_strtolower(trim($email ?: $name)));
+        $emailHash = $email ? hash($hash, mb_strtolower(trim($email))) : null;
 
         $paletteItem = $this->colors[hexdec(substr($digest, 0, 8)) % count($this->colors)];
         $palettePair = is_array($paletteItem) ? $paletteItem : [$paletteItem, $paletteItem];
@@ -165,7 +173,7 @@ class Avatars
             ."{$length}/{$fontSize}/{$rounded}/{$bold}/{$uppercase}/{$format}";
 
         if ($email) {
-            $url = $this->buildUrl("{$origin}/avatar/{$digest}", ['s' => $size, 'd' => $default]);
+            $url = $this->buildUrl("{$origin}/avatar/{$emailHash}", ['s' => $size, 'd' => $default]);
         }
 
         $supportedDefault = ! str_contains($origin, 'libravatar.org') || str_contains($host, 'ui-avatars.com');
@@ -180,9 +188,12 @@ class Avatars
                 $default = $this->buildUrl("{$proxy}/", ['url' => $default, ...$params]);
             }
 
+            // Without a photo to look up, the proxy fetches the initials directly
+            $photo = $image ?: ($email ? $this->buildUrl("{$origin}/avatar/{$emailHash}", ['s' => $size, 'd' => 404]) : null);
+
             $url = $this->buildUrl("{$proxy}/", [
-                'url' => $image ?: $this->buildUrl("{$origin}/avatar/{$digest}", ['s' => $size, 'd' => 404]),
-                'default' => $default,
+                'url' => $photo ?: $url,
+                'default' => $photo ? $default : null,
                 'fit' => 'cover',
                 ...$params,
             ]);
@@ -202,6 +213,7 @@ class Avatars
         ?string $fontColor = null,
         ?float $fontSize = null,
         ?string $format = null,
+        ?string $hash = null,
         ?string $host = null,
         ?int $length = null,
         ?string $mask = null,
@@ -219,6 +231,7 @@ class Avatars
         $this->fontColor = $fontColor ?? $this->fontColor;
         $this->fontSize = $fontSize ?? $this->fontSize;
         $this->format = $format ?? $this->format;
+        $this->hash = $hash ?? $this->hash;
         $this->host = $host ?? $this->host;
         $this->length = $length ?? $this->length;
         $this->mask = $mask ?? $this->mask;

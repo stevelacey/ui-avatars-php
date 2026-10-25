@@ -64,8 +64,20 @@ test('it is deterministic', function () {
     expect(avatar_url(name: NAME))->toBe(avatar_url(name: NAME));
 });
 
-test('gravatar hash matches email hash', function () {
-    expect(avatar_url(name: NAME, email: EMAIL))->toContain(md5(EMAIL));
+test('gravatar hash is the sha256 of the email', function () {
+    expect(avatar_url(name: NAME, email: EMAIL))->toContain('/avatar/'.hash('sha256', EMAIL).'?');
+});
+
+test('gravatar hash normalizes the email', function () {
+    expect(avatar_url(email: ' Ada@Example.com '))->toBe(avatar_url(email: EMAIL));
+});
+
+test('md5 hash is still available', function () {
+    expect(avatar_url(name: NAME, email: EMAIL, hash: 'md5'))->toContain('/avatar/'.md5(EMAIL).'?');
+});
+
+test('hash does not change the color', function () {
+    expect(rawurldecode(avatar_url(name: NAME, email: EMAIL)))->toEndWith(explode('&d=', rawurldecode(avatar_url(name: NAME, email: EMAIL, hash: 'md5')))[1]);
 });
 
 test('color is picked from email not name when both given', function () {
