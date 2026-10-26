@@ -6,11 +6,6 @@ test('instance requires name or email', function () {
     (new Avatars)->build();
 })->throws(InvalidArgumentException::class, 'requires at least one');
 
-test('build url omits null values', function () {
-    expect((new Avatars)->buildUrl('https://example.com/', ['a' => null, 'b' => 'two words']))
-        ->toBe('https://example.com/?b=two%20words');
-});
-
 test('all colors are valid hex triples', function () {
     expect(Avatars::COLORS)->not->toBeEmpty();
     foreach (Avatars::COLORS as $color) {
@@ -663,9 +658,50 @@ test('empty image without name or email throws', function () {
     (new Avatars)->build(image: '');
 })->throws(InvalidArgumentException::class, 'requires at least one');
 
-test('relative image url is passed through unchanged', function () {
-    expect((new Avatars)->build(name: NAME, image: '/media/avatar.jpg'))->toContain('%2Fmedia%2Favatar.jpg');
+test('relative image url is served unchanged', function () {
+    expect((new Avatars)->build(name: NAME, email: EMAIL, image: '/media/avatar.jpg', mask: 'hexagon'))->toBe('/media/avatar.jpg');
 });
+
+test('local images are served unchanged', function (string $image) {
+    expect((new Avatars)->build(name: NAME, image: $image, rounded: true))->toBe($image);
+})->with([
+    'media/avatar.jpg',
+    '//cdn.example.com/avatar.jpg',
+    'http://localhost:8000/avatar.jpg',
+    'http://app.localhost/avatar.jpg',
+    'https://myapp.test/avatar.jpg',
+    'http://box.local/avatar.jpg',
+    'http://myapp.internal/avatar.jpg',
+    'http://nas.lan/avatar.jpg',
+    'http://router.home.arpa/avatar.jpg',
+    'https://foo.example/avatar.jpg',
+    'http://myapp:8000/avatar.jpg',
+    'http://LOCALHOST./avatar.jpg',
+    'http://user:pass@localhost/avatar.jpg',
+    'http://0.0.0.0:8000/avatar.jpg',
+    'http://127.0.0.1/avatar.jpg',
+    'http://10.0.0.5/avatar.jpg',
+    'http://169.254.1.1/avatar.jpg',
+    'http://172.16.0.1/avatar.jpg',
+    'http://172.31.255.255/avatar.jpg',
+    'http://192.168.1.2:8080/avatar.jpg',
+    'http://[::1]:8000/avatar.jpg',
+    'http://[fd00::1]/avatar.jpg',
+    'http://[fe80::1]/avatar.jpg',
+]);
+
+test('public images are proxied', function (string $image) {
+    expect((new Avatars)->build(name: NAME, image: $image))->toStartWith('https://wsrv.nl/?url=');
+})->with([
+    'https://example.com/avatar.jpg',
+    'https://cdn.example.com/avatar.jpg?size=2',
+    'http://172.32.0.1/avatar.jpg',
+    'http://8.8.8.8/avatar.jpg',
+    'https://10.example.com/avatar.jpg',
+    'https://172.16.0.1.nip.io/avatar.jpg',
+    'http://[2001:db8::1]/avatar.jpg',
+    'https://testing.com/avatar.jpg',
+]);
 
 test('stringable image is supported', function () {
     $image = new class implements Stringable

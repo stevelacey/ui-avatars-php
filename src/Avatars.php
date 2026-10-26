@@ -4,6 +4,7 @@ namespace SteveLacey\UiAvatars;
 
 use BadMethodCallException;
 use InvalidArgumentException;
+use SteveLacey\UiAvatars\Support\Url;
 use Stringable;
 
 /**
@@ -93,17 +94,17 @@ class Avatars
         $fontSize ??= $this->fontSize;
         $format ??= $this->format;
         $hash ??= $this->hash;
-        $host = $this->parseHostname($host ?: $this->host);
+        $host = Url::withScheme($host ?: $this->host);
         $image = (string) $image ?: null;
         $length ??= $this->length;
         $region ??= $this->region;
         $rounded = (int) ($rounded ?? $this->rounded);
         $mask = $mask ?: $this->mask ?: (($email || $image) && $rounded ? 'circle' : null);
         $rounded = (int) ($rounded || $mask === 'circle');
-        $proxy = $this->parseHostname($proxy ?: $this->proxy);
+        $proxy = Url::withScheme($proxy ?: $this->proxy);
         $size ??= $this->size;
         $source ??= $this->source;
-        $origin = $this->parseHostname(self::SOURCES[$source] ?? $source);
+        $origin = Url::withScheme(self::SOURCES[$source] ?? $source);
         $uppercase = (int) ($uppercase ?? $this->uppercase);
 
         if (! $name && ! $email) {
@@ -128,6 +129,11 @@ class Avatars
 
         if ($origin && ! str_contains($origin, '.')) {
             throw new InvalidArgumentException("unknown source: '{$source}'");
+        }
+
+        // The proxy can't reach relative or local images, so serve them as they are
+        if ($image && Url::isLocal($image)) {
+            return $image;
         }
 
         $host = $host ?: ($region ? str_replace('//', "//{$region}.", self::HOST) : self::HOST);
@@ -173,7 +179,7 @@ class Avatars
             ."{$length}/{$fontSize}/{$rounded}/{$bold}/{$uppercase}/{$format}";
 
         if ($email) {
-            $url = $this->buildUrl("{$origin}/avatar/{$emailHash}", ['s' => $size, 'd' => $default]);
+            $url = Url::build("{$origin}/avatar/{$emailHash}", ['s' => $size, 'd' => $default]);
         }
 
         $supportedDefault = ! str_contains($origin, 'libravatar.org') || str_contains($host, 'ui-avatars.com');
@@ -185,13 +191,13 @@ class Avatars
             $params = ['w' => $size, 'h' => $size, 'mask' => $mask, 'output' => $output];
 
             if (! $supportedFormat || ! $supportedMask) {
-                $default = $this->buildUrl("{$proxy}/", ['url' => $default, ...$params]);
+                $default = Url::build("{$proxy}/", ['url' => $default, ...$params]);
             }
 
             // Without a photo to look up, the proxy fetches the initials directly
-            $photo = $image ?: ($email ? $this->buildUrl("{$origin}/avatar/{$emailHash}", ['s' => $size, 'd' => 404]) : null);
+            $photo = $image ?: ($email ? Url::build("{$origin}/avatar/{$emailHash}", ['s' => $size, 'd' => 404]) : null);
 
-            $url = $this->buildUrl("{$proxy}/", [
+            $url = Url::build("{$proxy}/", [
                 'url' => $photo ?: $url,
                 'default' => $photo ? $default : null,
                 'fit' => 'cover',
@@ -257,15 +263,5 @@ class Avatars
     public static function __callStatic(string $method, array $arguments): mixed
     {
         return (self::$shared ??= new self)->__call($method, $arguments);
-    }
-
-    public function buildUrl(string $base, array $params): string
-    {
-        return $base.'?'.http_build_query($params, '', '&', PHP_QUERY_RFC3986);
-    }
-
-    public function parseHostname(?string $value): ?string
-    {
-        return $value && ! str_contains($value, '://') ? "https://{$value}" : $value;
     }
 }

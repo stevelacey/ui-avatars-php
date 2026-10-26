@@ -43,14 +43,16 @@ test('it uses the shared instance', function () {
 test('stored image paths are resolved on the public disk', function () {
     $user = new User(['name' => 'Ada Lovelace', 'avatar' => 'avatars/ada.png']);
     expect($user->getAvatarImage())->toBe('http://localhost/storage/avatars/ada.png');
-    expect($user->avatar_url)->toContain('http%3A%2F%2Flocalhost%2Fstorage%2Favatars%2Fada.png');
+    expect($user->avatar_url)->toBe('http://localhost/storage/avatars/ada.png');
 });
 
 test('stored image paths are resolved on the configured disk', function () {
     config(['filesystems.disks.avatars' => ['driver' => 'local', 'root' => '/tmp', 'url' => 'https://cdn.example.com']]);
     config(['ui-avatars.disk' => 'avatars']);
 
-    expect((new User(['image' => 'ada.png']))->getAvatarImage())->toBe('https://cdn.example.com/ada.png');
+    $user = new User(['name' => 'Ada Lovelace', 'image' => 'ada.png']);
+    expect($user->getAvatarImage())->toBe('https://cdn.example.com/ada.png');
+    expect($user->avatar_url)->toContain('https%3A%2F%2Fcdn.example.com%2Fada.png');
 });
 
 test('image urls are not resolved on the disk', function () {

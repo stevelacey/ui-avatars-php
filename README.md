@@ -80,6 +80,9 @@ At least one of `name` or `email` is required.
 | `email` | Email address used to look up a photo via Gravatar or Libravatar |
 | `image` | Image URL, e.g. an uploaded photo |
 
+Relative image URLs and images on local hosts, e.g. `localhost`, `*.test` or private IPs, can't be
+reached by the proxy, so they're served as they are, without cropping, masks, or a fallback.
+
 ## Options
 
 Options can be configured globally or overridden per call.
