@@ -11,7 +11,7 @@ Deterministic avatar URLs for light and dark designs:
 back to colored initials via [ui-avatars.com](https://ui-avatars.com).
 Same input, same URL, always.
 
-Also available for [Python](https://github.com/stevelacey/ui-avatars-python).
+Also available for [Python](https://github.com/stevelacey/ui-avatars-python) and [JavaScript](https://github.com/stevelacey/ui-avatars-js).
 
 <table>
 <tr>
